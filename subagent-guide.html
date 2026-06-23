@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>サブエージェント完全ガイド — 初心者から実践まで</title>
+<style>
+:root{
+  --slate-dark:#141413;
+  --slate-medium:#3d3d3a;
+  --slate-light:#5e5d59;
+  --ivory-light:#faf9f5;
+  --ivory-medium:#f0eee6;
+  --ivory-dark:#e8e6dc;
+  --cloud-medium:#b0aea5;
+  --cloud-light:#d1cfc5;
+  --white:#ffffff;
+  --accent:#c6613f;
+  --clay:#d97757;
+  --coral:#ebcece;
+  --fig:#c46686;
+  --heather:#cbcadb;
+  --sky:#6a9bcc;
+  --cactus:#bcd1ca;
+  --olive:#788c5d;
+  --kraft:#d4a27f;
+  --manilla:#ebdbbc;
+  --oat:#e3dacc;
+  --border-10: rgba(20,20,19,0.10);
+  --border-20: rgba(20,20,19,0.20);
+  --radius-s:4px;
+  --radius-m:8px;
+  --radius-l:16px;
+  --radius-round:999px;
+  --font-serif: Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Segoe UI", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --maxw: 760px;
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--ivory-light);
+  color:var(--slate-dark);
+  font-family:var(--font-serif);
+  font-size:16px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.font-sans{font-family:var(--font-sans);}
+p{margin:0 0 1em;}
+a{color:var(--slate-dark);}
+a:hover{color:var(--slate-light);}
+img,svg{max-width:100%;}
+
+/* ===== Progress bar ===== */
+.progress-bar{
+  position:fixed; top:0; left:0; height:3px; width:0%;
+  background:var(--accent); z-index:200; transition:width .1s linear;
+}
+
+/* ===== Top bar ===== */
+.topbar{
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.9rem 1.1rem;
+  background:rgba(250,249,245,0.92);
+  backdrop-filter:saturate(180%) blur(8px);
+  border-bottom:1px solid var(--border-10);
+}
+.topbar .brand{
+  font-family:var(--font-sans); font-weight:700; font-size:1rem;
+  letter-spacing:-0.01em; display:flex; align-items:center; gap:.5rem;
+}
+.topbar .brand .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);display:inline-block;}
+.menu-btn{
+  background:var(--slate-dark); color:var(--ivory-light); border:none;
+  width:2.5rem; height:2.5rem; border-radius:var(--radius-round);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  font-size:1.1rem;
+}
+.menu-btn:hover{background:var(--slate-medium);}
+
+/* ===== TOC drawer ===== */
+.overlay{
+  position:fixed; inset:0; background:rgba(20,20,19,0.45);
+  opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:150;
+}
+.overlay.open{opacity:1; pointer-events:auto;}
+.toc-drawer{
+  position:fixed; top:0; right:0; height:100%; width:min(86vw, 360px);
+  background:var(--ivory-light); z-index:160;
+  transform:translateX(100%); transition:transform .3s ease;
+  display:flex; flex-direction:column;
+  box-shadow:-8px 0 24px rgba(20,20,19,0.15);
+}
+.toc-drawer.open{transform:translateX(0);}
+.toc-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1.1rem; border-bottom:1px solid var(--border-10);
+  font-family:var(--font-sans); font-weight:700;
+}
+.toc-close{
+  background:none; border:none; font-size:1.4rem; cursor:pointer;
+  color:var(--slate-dark); width:2rem; height:2rem; line-height:1;
+}
+.toc-list{list-style:none; margin:0; padding:0.5rem; overflow-y:auto; flex:1;}
+.toc-list li{margin:0;}
+.toc-list a{
+  display:flex; gap:.7rem; align-items:baseline;
+  padding:0.7rem 0.75rem; border-radius:var(--radius-m);
+  text-decoration:none; font-family:var(--font-sans); font-size:.92rem;
+  color:var(--slate-dark);
+}
+.toc-list a:hover{background:var(--ivory-medium);}
+.toc-list .toc-num{
+  font-family:var(--font-mono); font-size:.78rem; color:var(--cloud-medium); min-width:1.6rem;
+}
+.toc-foot{padding:1rem 1.1rem; border-top:1px solid var(--border-10);}
+.toc-foot button{
+  width:100%; padding:0.7rem; border-radius:var(--radius-round);
+  border:1px solid var(--border-20); background:transparent;
+  font-family:var(--font-sans); font-size:.85rem; cursor:pointer; color:var(--slate-dark);
+}
+.toc-foot button:hover{background:var(--ivory-medium);}
+
+/* ===== Hero ===== */
+.hero{
+  padding:2.6rem 1.25rem 1.8rem;
+  max-width:var(--maxw); margin:0 auto;
+}
+.eyebrow{
+  font-family:var(--font-sans); font-size:.78rem; font-weight:700;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--accent);
+  margin-bottom:.8rem; display:block;
+}
+.hero h1{
+  font-size:clamp(1.9rem, 5.5vw, 2.6rem); line-height:1.15; font-weight:700;
+  margin:0 0 .9rem; letter-spacing:-0.01em;
+}
+.break-mobile{display:none;}
+@media(max-width:639px){
+  .break-mobile{display:block;}
+}
+.hero .lead{
+  font-size:1.05rem; color:var(--slate-medium); margin-bottom:1.4rem;
+}
+.hero-meta{
+  display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.6rem;
+}
+.tag{
+  font-family:var(--font-sans); font-size:.75rem; font-weight:600;
+  padding:.3rem .7rem; border-radius:var(--radius-round);
+  background:var(--ivory-medium); color:var(--slate-medium);
+}
+.hero-cta{
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:var(--slate-dark); color:var(--ivory-light);
+  font-family:var(--font-sans); font-weight:600; font-size:.92rem;
+  padding:.85rem 1.4rem; border-radius:var(--radius-round);
+  text-decoration:none; border:1px solid var(--slate-dark);
+}
+.hero-cta:hover{background:var(--slate-medium); color:var(--ivory-light);}
+
+/* ===== Layout ===== */
+main{max-width:var(--maxw); margin:0 auto; padding:0 1.25rem 4rem;}
+.chapters{display:flex; flex-direction:column; gap:1rem;}
+
+/* ===== Chapter accordion ===== */
+.chapter{
+  background:var(--white);
+  border:1px solid var(--border-10);
+  border-radius:var(--radius-l);
+  overflow:hidden;
+  border-left:4px solid var(--chap-color, var(--accent));
+  scroll-margin-top:5rem;
+}
+.chapter summary{
+  list-style:none; cursor:pointer;
+  display:flex; align-items:center; gap:.9rem;
+  padding:1.15rem 1.2rem;
+  font-family:var(--font-sans);
+}
+.chapter summary::-webkit-details-marker{display:none;}
+.chapter summary::marker{content:"";}
+.chap-num{
+  font-family:var(--font-mono); font-size:.8rem; font-weight:700;
+  color:var(--chap-color, var(--accent));
+  background:color-mix(in srgb, var(--chap-color, var(--accent)) 16%, white);
+  width:2.1rem; height:2.1rem; border-radius:var(--radius-round);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.chap-title{flex:1; font-weight:700; font-size:1rem; line-height:1.4;}
+.chap-sub{display:block; font-weight:400; font-size:.8rem; color:var(--slate-light); margin-top:.15rem;}
+.chevron{
+  font-size:.8rem; color:var(--cloud-medium); transition:transform .25s ease; flex-shrink:0;
+}
+.chapter[open] .chevron{transform:rotate(180deg);}
+.chapter-body{
+  padding:0 1.2rem 1.4rem; border-top:1px solid var(--border-10);
+}
+.chapter-body > *:first-child{margin-top:1.2rem;}
+.chapter-body h4{
+  font-size:1rem; font-weight:700; margin:1.6rem 0 .6rem;
+}
+.chapter-body h4:first-of-type{margin-top:1.2rem;}
+
+/* ===== Content components ===== */
+.callout{
+  border-radius:var(--radius-m); padding:.9rem 1.1rem; margin:1rem 0;
+  font-family:var(--font-sans); font-size:.88rem; line-height:1.6;
+  border-left:3px solid var(--cloud-medium); background:var(--ivory-medium);
+}
+.callout b{display:block; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;}
+.callout-tip{border-left-color:var(--sky); background:#eef4fa;}
+.callout-warn{border-left-color:var(--accent); background:#faece6;}
+.callout-example{border-left-color:var(--olive); background:#eef1ea;}
+.callout-note{border-left-color:var(--heather); background:#f1f0f6;}
+
+pre.code{
+  background:var(--slate-dark); color:var(--ivory-light);
+  padding:1rem 1.1rem; border-radius:var(--radius-m);
+  overflow-x:auto; font-family:var(--font-mono); font-size:.78rem;
+  line-height:1.65; margin:1rem 0; -webkit-overflow-scrolling:touch;
+}
+pre.code code{font-family:inherit;}
+.tok-key{color:var(--cactus);}
+.tok-str{color:var(--kraft);}
+.tok-comment{color:var(--cloud-medium); font-style:italic;}
+.tok-tag{color:var(--coral);}
+
+.code-label{
+  font-family:var(--font-mono); font-size:.72rem; color:var(--slate-light);
+  margin:1rem 0 -0.5rem; display:block;
+}
+
+table.cmp{
+  width:100%; border-collapse:collapse; font-family:var(--font-sans);
+  font-size:.82rem; margin:1rem 0;
+}
+table.cmp th, table.cmp td{
+  text-align:left; padding:.6rem .7rem; border-bottom:1px solid var(--border-10);
+  vertical-align:top;
+}
+table.cmp th{
+  font-weight:700; color:var(--slate-light); font-size:.72rem;
+  text-transform:uppercase; letter-spacing:.03em; white-space:nowrap;
+}
+.table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:var(--radius-m);}
+.table-wrap table{min-width:480px;}
+
+.flow{display:flex; flex-direction:column; gap:.6rem; margin:1.2rem 0;}
+.flow-step{
+  background:var(--ivory-medium); border-radius:var(--radius-m);
+  padding:.85rem 1rem; font-family:var(--font-sans); font-size:.85rem;
+  border:1px solid var(--border-10);
+}
+.flow-step strong{display:block; font-size:.78rem; color:var(--slate-light); margin-bottom:.2rem; font-weight:700;}
+.flow-step.accent{background:var(--slate-dark); color:var(--ivory-light); border-color:var(--slate-dark);}
+.flow-step.accent strong{color:var(--cloud-light);}
+.flow-arrow{
+  align-self:center; color:var(--cloud-medium); font-size:1rem;
+}
+.flow-parallel{display:flex; flex-direction:column; gap:.5rem;}
+@media(min-width:640px){
+  .flow{flex-direction:row; align-items:stretch;}
+  .flow-step{flex:1;}
+  .flow-arrow{transform:none;}
+  .flow-parallel{flex-direction:row; flex:1;}
+}
+
+.grid-cards{display:grid; grid-template-columns:1fr; gap:.8rem; margin:1.2rem 0;}
+@media(min-width:560px){.grid-cards{grid-template-columns:1fr 1fr;}}
+.card{
+  background:var(--ivory-medium); border-radius:var(--radius-m); padding:1rem;
+  border:1px solid var(--border-10);
+}
+.card h5{font-family:var(--font-sans); font-size:.88rem; font-weight:700; margin:0 0 .4rem;}
+.card p{font-size:.85rem; color:var(--slate-medium); margin:0;}
+
+ul.check{list-style:none; margin:1rem 0; padding:0;}
+ul.check li{
+  position:relative; padding-left:1.7rem; margin-bottom:.6rem; font-size:.92rem;
+}
+ul.check li::before{
+  content:"✓"; position:absolute; left:0; top:0; color:var(--olive); font-weight:700;
+  font-family:var(--font-sans);
+}
+ul.cross li::before{content:"✕"; color:var(--accent);}
+
+ol.steps{margin:1rem 0; padding-left:1.3rem;}
+ol.steps li{margin-bottom:.5rem; font-size:.92rem;}
+
+.divider{height:1px; background:var(--border-10); margin:1.4rem 0; border:none;}
+
+.badge-row{display:flex; flex-wrap:wrap; gap:.4rem; margin:.8rem 0;}
+.badge{
+  font-family:var(--font-mono); font-size:.72rem; padding:.25rem .6rem;
+  border-radius:var(--radius-s); background:var(--ivory-dark); color:var(--slate-medium);
+}
+
+/* persona quote */
+.quote{
+  font-family:var(--font-serif); font-style:italic; font-size:.95rem;
+  color:var(--slate-medium); border-left:3px solid var(--cloud-light);
+  padding-left:1rem; margin:1.2rem 0;
+}
+
+/* ===== Top button ===== */
+.top-btn{
+  position:fixed; right:1rem; bottom:1rem; z-index:90;
+  width:2.8rem; height:2.8rem; border-radius:var(--radius-round);
+  background:var(--slate-dark); color:var(--ivory-light); border:none;
+  display:flex; align-items:center; justify-content:center; font-size:1.1rem;
+  cursor:pointer; opacity:0; pointer-events:none; transition:opacity .2s ease;
+  box-shadow:0 6px 18px rgba(20,20,19,0.25);
+}
+.top-btn.show{opacity:1; pointer-events:auto;}
+
+/* ===== Footer ===== */
+footer{
+  background:var(--slate-dark); color:var(--ivory-light);
+  padding:2.4rem 1.25rem; margin-top:1rem;
+}
+footer .foot-inner{max-width:var(--maxw); margin:0 auto;}
+footer h4{font-family:var(--font-sans); font-size:.95rem; margin:0 0 .8rem;}
+footer ul{list-style:none; padding:0; margin:0 0 1.4rem; font-family:var(--font-sans); font-size:.85rem;}
+footer li{margin-bottom:.5rem; color:var(--cloud-light);}
+footer a{color:var(--ivory-light); text-decoration:none;}
+footer a:hover{color:var(--cloud-light);}
+footer .fine{font-size:.75rem; color:var(--cloud-medium); border-top:1px solid rgba(250,249,245,0.15); padding-top:1rem; margin-top:1rem;}
+
+@media(min-width:860px){
+  .hero{padding-top:4rem;}
+  .chapter summary{padding:1.4rem 1.6rem;}
+  .chapter-body{padding:0 1.6rem 1.8rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span>サブエージェント完全ガイド</div>
+  <button class="menu-btn" id="menuBtn" aria-label="目次を開く">☰</button>
+</header>
+
+<div class="overlay" id="overlay"></div>
+<nav class="toc-drawer" id="tocDrawer" aria-label="目次">
+  <div class="toc-head">
+    <span>目次</span>
+    <button class="toc-close" id="tocClose" aria-label="閉じる">×</button>
+  </div>
+  <ul class="toc-list" id="tocList"></ul>
+  <div class="toc-foot">
+    <button id="toggleAllBtn">すべての章を展開する</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <span class="eyebrow">Claude Code Subagents</span>
+  <h1>サブエージェント<br class="break-mobile">完全ガイド</h1>
+  <p class="lead">「なぜ必要か」から「どう定義するか」「いつ起動するか」まで。初心者から実用レベルまで、サブエージェントを一気通貫で学ぶための1枚ガイドです。</p>
+  <div class="hero-meta">
+    <span class="tag">全13章</span>
+    <span class="tag">スマホ最適化</span>
+    <span class="tag">実例つき</span>
+  </div>
+  <a href="#ch1" class="hero-cta">読み始める →</a>
+</div>
+
+<main>
+  <div class="chapters" id="chapters">
+
+    <!-- ===================== CH1 ===================== -->
+    <details class="chapter" id="ch1" open style="--chap-color:#c6613f;">
+      <summary>
+        <span class="chap-num">01</span>
+        <span class="chap-title">サブエージェントとは何か
+          <span class="chap-sub">基礎概念とメインエージェントとの違い</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p><strong>サブエージェント</strong>とは、メインの会話（メインエージェント）とは別に、<strong>独立したコンテキストウィンドウ</strong>を持って動く、特定のタスクに特化したミニAIエージェントです。それぞれに「指示書（システムプロンプト）」「使えるツールの一覧」「使用するモデル」を個別に設定できます。</p>
+
+        <div class="callout callout-tip">
+          <b>たとえるなら</b>
+          メインエージェントは「プロジェクトマネージャー」、サブエージェントは「各分野の専門スタッフ」です。PMは全体の流れを管理し、調査・実装・レビューといった専門作業は担当者に任せて、結果の報告だけを受け取ります。PM自身が現場の細かい作業すべてに付き合う必要はありません。
+        </div>
+
+        <h4>通常の会話との違い</h4>
+        <p>サブエージェントを使わない場合、探索・実装・レビューといったすべての作業が<strong>同じ1つのコンテキストウィンドウ</strong>の中で起こります。ファイルを大量に読み込んだり、ログを延々と出力したりすると、その情報がすべて会話履歴に蓄積され続けます。</p>
+        <p>サブエージェントを使うと、各タスクが<strong>別の「部屋」</strong>で実行され、その部屋でどれだけ大量の調査や試行錯誤をしても、メインの会話に返ってくるのは<strong>要約された結果だけ</strong>です。</p>
+
+        <h4>全体の流れ（イメージ図）</h4>
+        <div class="flow">
+          <div class="flow-step accent"><strong>ユーザー</strong>「この機能を実装して、レビューもして」</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step accent"><strong>メインエージェント</strong>タスクを分解し、適切なサブエージェントに委譲</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><strong>サブエージェント群</strong>各自の部屋で調査・実装・レビューを実行</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step accent"><strong>メインエージェント</strong>要約を統合してユーザーに報告</div>
+        </div>
+
+        <p>つまりサブエージェントとは、<strong>「考える場所を分ける」仕組み</strong>です。何を考えるかではなく、どこで考えるかをコントロールするための機能だと捉えると理解しやすくなります。</p>
+      </div>
+    </details>
+
+    <!-- ===================== CH2 ===================== -->
+    <details class="chapter" id="ch2" style="--chap-color:#6a9bcc;">
+      <summary>
+        <span class="chap-num">02</span>
+        <span class="chap-title">なぜサブエージェントが必要か
+          <span class="chap-sub">5つの理由</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>サブエージェントが解決する課題は、大きく5つに整理できます。それぞれ独立した効果ですが、組み合わせることで効果が掛け算になります。</p>
+
+        <h4>1. コンテキストウィンドウの保全</h4>
+        <p>AIエージェントが扱える会話履歴（コンテキスト）には上限があります。大量のコード検索やログ出力でこれが埋まると、過去の指示を忘れたり、関係ない情報に引っ張られて精度が落ちたりします。サブエージェントは探索や調査を別コンテキストに隔離し、メインの会話を「ノイズの少ない状態」に保ちます。</p>
+
+        <h4>2. 権限の最小化と安全性</h4>
+        <p>各サブエージェントには、必要最小限のツール権限だけを割り当てられます。たとえばコードレビュー専用のエージェントには「読み取り」権限だけを与え、ファイル書き込みやコマンド実行の権限を持たせない、といった設計が可能です。これにより、意図しないファイル変更や危険な操作を構造的に防げます。</p>
+
+        <h4>3. 専門性による品質向上</h4>
+        <p>「あなたはセキュリティとパフォーマンスに厳格なコードレビュアーです」「あなたはエラーメッセージから根本原因を特定するデバッグの専門家です」というように、役割を絞った指示を与えると、汎用的な指示よりも出力の質が安定します。人間のチームに専門職を置くのと同じ発想です。</p>
+
+        <h4>4. 並列実行による時間短縮</h4>
+        <p>複数のサブエージェントは同時に起動できます。「フロントエンドの調査」「バックエンドの調査」「セキュリティチェック」を並列で走らせれば、逐次実行に比べて体感の作業スピードが大きく向上します（実践報告では2〜3倍程度という声もあります）。</p>
+
+        <h4>5. コスト最適化</h4>
+        <p>すべてのタスクに最高性能のモデルを使う必要はありません。grep的な単純検索には軽量モデル、複雑な設計判断には高性能モデルというように、タスクの難易度に応じてモデルを使い分けることで、精度を落とさずにコストを抑えられます。</p>
+
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>理由</th><th>解決する課題</th><th>効果</th></tr></thead>
+          <tbody>
+            <tr><td>コンテキスト保全</td><td>会話が長くなるほど精度が落ちる</td><td>メイン会話を常にクリーンに保つ</td></tr>
+            <tr><td>権限の最小化</td><td>意図しない書き込み・破壊的操作</td><td>事故の発生確率を構造的に下げる</td></tr>
+            <tr><td>専門性</td><td>汎用的な指示では精度がぶれる</td><td>役割特化で出力品質が安定</td></tr>
+            <tr><td>並列実行</td><td>逐次処理は時間がかかる</td><td>体感スピード2〜3倍</td></tr>
+            <tr><td>コスト最適化</td><td>常に高性能モデルはコスト高</td><td>難易度に応じた使い分け</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+
+    <!-- ===================== CH3 ===================== -->
+    <details class="chapter" id="ch3" style="--chap-color:#788c5d;">
+      <summary>
+        <span class="chap-num">03</span>
+        <span class="chap-title">ビルトインサブエージェント
+          <span class="chap-sub">最初から組み込まれている3種類</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>Claude Code には、自分で定義しなくても最初から使える「ビルトインサブエージェント」があります。代表的なのは次の3種類です。</p>
+
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>エージェント</th><th>用途</th><th>特徴</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Explore</strong></td><td>ファイル探索・コード検索</td><td>読み取り専用、高速。「どこに何があるか」を調べるのが得意</td></tr>
+            <tr><td><strong>Plan</strong></td><td>計画立案・設計フェーズ</td><td>実装はせず、調査結果をもとに段階的な計画を返す</td></tr>
+            <tr><td><strong>general-purpose</strong></td><td>複雑な複数ステップの操作</td><td>探索・実装の両方に対応できる汎用型</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>これらは <strong>Claude が文脈を読んで自動的に委譲</strong>します。ユーザーが明示的に「Exploreエージェントを使って」と言わなくても、「このコードベースのどこに認証処理があるか調べて」のような依頼に対しては、自動的に Explore が選ばれます。</p>
+
+        <div class="callout callout-note">
+          <b>環境によって追加されることもある</b>
+          プロジェクトやプラグインの設定によっては、上記3種類に加えて目的特化のビルトイン的なエージェント（ステータスライン設定の補助、特定ツールの利用ガイドなど）が利用できる場合もあります。どんなエージェントが使えるかは環境ごとに異なります。
+        </div>
+
+        <h4>自動委譲 vs 明示的な呼び出し</h4>
+        <ul class="check">
+          <li><strong>自動委譲</strong>：依頼内容からClaudeが最適なサブエージェントを自分で選ぶ</li>
+          <li><strong>明示的な呼び出し</strong>：「Exploreエージェントで調べて」のように名指しで指定する</li>
+          <li>カスタムエージェントも、<code>description</code>の書き方次第で自動委譲の対象になる（第5章で詳述）</li>
+        </ul>
+      </div>
+    </details>
+
+    <!-- ===================== CH4 ===================== -->
+    <details class="chapter" id="ch4" style="--chap-color:#c46686;">
+      <summary>
+        <span class="chap-num">04</span>
+        <span class="chap-title">メイン vs サブ の役割分担
+          <span class="chap-sub">どちらに任せるべきかの判断軸</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>サブエージェントは便利ですが、何でもかんでも委譲すればいいわけではありません。役割分担の基本原則は次の通りです。</p>
+
+        <div class="grid-cards">
+          <div class="card">
+            <h5>メイン会話が向いている</h5>
+            <p>方向性が固まっていない相談、要件のすり合わせ、一往復で終わる軽い質問、ユーザーとの対話そのものが目的の場面</p>
+          </div>
+          <div class="card">
+            <h5>サブエージェントが向いている</h5>
+            <p>探索や調査で大量の情報を読む必要がある場面、明確に独立した複数工程、並列化できる作業、権限を絞りたい作業</p>
+          </div>
+        </div>
+
+        <h4>最初から起動すべき場合</h4>
+        <p><strong>複数工程がすでに決まっている場合</strong>は、最初からパイプラインとして組むのが効率的です。</p>
+        <div class="flow">
+          <div class="flow-step"><strong>実装エージェント</strong>コード生成</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><strong>レビューエージェント</strong>（読み取り専用）セキュリティ・パフォーマンスチェック</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><strong>テストエージェント</strong>ユニット・統合テスト作成</div>
+        </div>
+        <p>「実装 → レビュー → テストまで回して」と1回指示するだけで、複数エージェントが順序立てて、あるいは並列で処理してくれます。</p>
+
+        <p><strong>コンテキストが「汚れる」と予見できる場合</strong>も最初から委譲すべきです。大量のコード検索・解析、大量のログやファイルダンプ、複雑なデータベース調査などは、最初から Explore や Plan に任せたほうが効果的です。</p>
+
+        <h4>途中で切り替える場合</h4>
+        <ol class="steps">
+          <li><strong>初期段階：</strong>フレームワーク選定など方向性を詰める段階は、メイン会話のままでOK</li>
+          <li><strong>実装フェーズが定まった後：</strong>明確なパイプラインが見えてきたらエージェントを投入</li>
+          <li><strong>途中で複雑さが出た：</strong>ファイルを何度も読み込みながら検討するような展開になったら、その時点で Explore エージェントに委譲</li>
+        </ol>
+
+        <h4>判断フロー全体図</h4>
+        <div class="flow">
+          <div class="flow-step accent">開発を始める<br><span style="opacity:.8;font-size:.8rem;">「フレームワーク選定を相談したい」</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">メイン会話で方向性を詰める</div>
+        </div>
+        <div class="flow">
+          <div class="flow-step accent">実装フェーズが決定<br><span style="opacity:.8;font-size:.8rem;">「実装→レビュー→テストまで」</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">3ステップが明確なら最初からエージェント設定</div>
+        </div>
+        <div class="flow">
+          <div class="flow-step accent">途中で複雑化<br><span style="opacity:.8;font-size:.8rem;">「ファイルを何度も読み返している」</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">ここで Explore エージェントに委譲</div>
+        </div>
+      </div>
+    </details>
+
+    <!-- ===================== CH5 ===================== -->
+    <details class="chapter" id="ch5" style="--chap-color:#d97757;">
+      <summary>
+        <span class="chap-num">05</span>
+        <span class="chap-title">サブエージェント定義ファイルの書き方
+          <span class="chap-sub">.claude/agents/ の frontmatter</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>カスタムサブエージェントは、<code>.claude/agents/</code> 配下に Markdown ファイルを置くことで定義します。ファイルの先頭に YAML の frontmatter を書き、本文にそのエージェント専用のシステムプロンプト（指示書）を書きます。</p>
+
+        <span class="code-label">.claude/agents/code-reviewer.md</span>
+        <pre class="code"><code><span class="tok-comment">---</span>
+<span class="tok-key">name:</span> <span class="tok-str">code-reviewer</span>
+<span class="tok-key">description:</span> <span class="tok-str">コード変更後に必ず使用。セキュリティ・パフォーマンス・可読性の観点でレビューする。</span>
+<span class="tok-key">tools:</span> <span class="tok-str">Read, Grep, Glob</span>
+<span class="tok-key">model:</span> <span class="tok-str">sonnet</span>
+<span class="tok-comment">---</span>
+
+あなたは厳格なコードレビュアーです。
+変更されたファイルを読み、以下の観点で指摘してください。
+
+1. セキュリティ上の脆弱性がないか
+2. パフォーマンス上の懸念がないか
+3. 可読性・命名・既存規約との一貫性
+
+指摘は「重大度」付きで簡潔にまとめ、
+修正コードそのものは書かないこと。</code></pre>
+
+        <h4>frontmatter の各項目</h4>
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>項目</th><th>必須</th><th>役割</th></tr></thead>
+          <tbody>
+            <tr><td><code>name</code></td><td>必須</td><td>エージェントの識別名。明示的に呼び出すときにも使う</td></tr>
+            <tr><td><code>description</code></td><td>必須</td><td>「いつこのエージェントを使うべきか」の説明。Claudeはこの文章を読んで自動委譲を判断するため、最も重要な項目</td></tr>
+            <tr><td><code>tools</code></td><td>任意</td><td>使用を許可するツールのカンマ区切りリスト。省略するとすべてのツールを継承</td></tr>
+            <tr><td><code>model</code></td><td>任意</td><td>使用するモデル（第7章で詳述）。省略するとデフォルトのサブエージェント用モデルを使用</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-tip">
+          <b>description が自動委譲の鍵</b>
+          Claudeは会話の文脈と各サブエージェントの<code>description</code>を照らし合わせて、「このタスクにはどのエージェントが適切か」を判断します。あいまいな説明だと委譲されなかったり、意図しないタイミングで呼ばれたりするので、「いつ使うか」を具体的に書くことが重要です。
+        </div>
+
+        <h4>定義ファイルの置き場所</h4>
+        <ul class="check">
+          <li><strong>プロジェクト単位：</strong><code>./.claude/agents/</code> — そのリポジトリだけで使う。Gitで管理してチームに共有できる</li>
+          <li><strong>ユーザー単位：</strong><code>~/.claude/agents/</code> — どのプロジェクトでも使える個人用エージェント</li>
+        </ul>
+
+        <p>本文（frontmatterより下の部分）が、そのサブエージェント専用のシステムプロンプトになります。ここに役割・制約・出力フォーマットなどを具体的に書き込むほど、専門性の高い動きをしてくれます。</p>
+      </div>
+    </details>
+
+    <!-- ===================== CH6 ===================== -->
+    <details class="chapter" id="ch6" style="--chap-color:#5e5d59;">
+      <summary>
+        <span class="chap-num">06</span>
+        <span class="chap-title">「コンテキストを汚さない」とは
+          <span class="chap-sub">具体例で理解するBefore/After</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>「コンテキストを汚さない」というのは抽象的に聞こえますが、実際の会話で何が起きるかを比べると分かりやすくなります。</p>
+
+        <h4>Before：サブエージェントを使わない場合</h4>
+        <div class="flow">
+          <div class="flow-step">「認証まわりのバグを直して」と依頼</div>
+        </div>
+        <p>メインエージェントが20個のファイルを開き、関連しそうな関数を片っ端から読み、ログを大量に出力しながら原因を探す。最終的にバグは直るが、その過程の大量のファイル内容・試行錯誤・的外れだった推測が、すべて会話履歴に残り続ける。</p>
+        <p>結果：会話が長くなるほど、Claudeが本来覚えておくべき「最初の指示」や「これまでの決定事項」が、ノイズに埋もれて参照されにくくなる。</p>
+
+        <h4>After：Exploreエージェントに委譲した場合</h4>
+        <div class="flow">
+          <div class="flow-step">「認証まわりのバグを直して」と依頼</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step accent">Explore エージェント（別コンテキスト）が20ファイルを調査</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">メイン会話に返るのは「原因は<code>auth.ts</code>の42行目、理由は◯◯」という要約のみ</div>
+        </div>
+        <p>20ファイル分の試行錯誤はサブエージェント側のコンテキストで完結し、メイン会話には数行の結論だけが残ります。</p>
+
+        <div class="callout callout-warn">
+          <b>注意</b>
+          サブエージェントに委譲しても、戻ってくる要約が長すぎたり、本来不要な詳細を含んでいたりすると「汚さない」効果は薄れます。サブエージェントの<code>description</code>や本文の指示で、「結論だけを簡潔に返す」よう明示しておくと効果的です。
+        </div>
+
+        <h4>コンテキストが汚れやすい作業の特徴</h4>
+        <ul class="check">
+          <li>多数のファイルを横断的に読む必要がある</li>
+          <li>試行錯誤が前提（何度もコマンドを叩いて結果を見る）</li>
+          <li>ログ・スタックトレース・大量のテキスト出力を伴う</li>
+          <li>調査結果のうち、最終的に使うのはごく一部</li>
+        </ul>
+        <p>これらの特徴に当てはまる作業ほど、最初からサブエージェントに任せる価値が高いと判断できます。</p>
+      </div>
+    </details>
+
+    <!-- ===================== CH7 ===================== -->
+    <details class="chapter" id="ch7" style="--chap-color:#bcd1ca;">
+      <summary>
+        <span class="chap-num">07</span>
+        <span class="chap-title">使用モデルの指定方法
+          <span class="chap-sub">model フィールドの正しい書き方</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>サブエージェントごとに、使用するモデルを <code>model</code> フィールドで指定できます。指定できる値は次の4種類です。</p>
+
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>指定値</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td><code>haiku</code></td><td>軽量・高速・低コストなモデルを使用</td></tr>
+            <tr><td><code>sonnet</code></td><td>バランス型のモデルを使用</td></tr>
+            <tr><td><code>opus</code></td><td>最も高性能なモデルを使用</td></tr>
+            <tr><td><code>inherit</code></td><td>メイン会話で使用しているモデルをそのまま引き継ぐ</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <span class="code-label">model フィールドの記述例</span>
+        <pre class="code"><code><span class="tok-comment">---</span>
+<span class="tok-key">name:</span> <span class="tok-str">quick-grep</span>
+<span class="tok-key">description:</span> <span class="tok-str">単純なキーワード検索・該当ファイルの特定に使用</span>
+<span class="tok-key">tools:</span> <span class="tok-str">Read, Grep, Glob</span>
+<span class="tok-key">model:</span> <span class="tok-str">haiku</span>
+<span class="tok-comment">---</span></code></pre>
+
+        <p><code>model</code> を省略した場合は、デフォルトのサブエージェント用モデルが使われます。意図的にモデルを揃えたい・引き継ぎたい場合は明示的に指定しましょう。</p>
+
+        <h4>タスク特性とモデル選びの目安</h4>
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>タスクの性質</th><th>推奨モデル</th><th>理由</th></tr></thead>
+          <tbody>
+            <tr><td>grep的な単純検索・ファイル特定</td><td>haiku</td><td>判断の難易度が低く速度とコストを優先できる</td></tr>
+            <tr><td>コードレビュー・テスト生成</td><td>sonnet</td><td>一定の判断力が必要だが速度も重視したいバランス領域</td></tr>
+            <tr><td>複雑な設計判断・複数システム統合</td><td>opus</td><td>誤判断のコストが高く、精度を最優先すべき領域</td></tr>
+            <tr><td>メインの流れと一貫させたい補助エージェント</td><td>inherit</td><td>メインと判断基準・トーンを揃えたい場合</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-tip">
+          <b>判断のコツ</b>
+          「間違えたときのコスト」で考えると選びやすくなります。間違えてもすぐ気づいて直せる単純作業は軽量モデル、間違いが後工程に波及しやすい設計判断は高性能モデル、という基準が実用的です。
+        </div>
+      </div>
+    </details>
+
+    <!-- ===================== CH8 ===================== -->
+    <details class="chapter" id="ch8" style="--chap-color:#141413;">
+      <summary>
+        <span class="chap-num">08</span>
+        <span class="chap-title">権限の最小化と安全性
+          <span class="chap-sub">tools フィールドでツールを絞り込む</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>サブエージェントの大きな利点のひとつが、<strong>ツールアクセス権限を個別にコントロールできる</strong>ことです。<code>tools</code> フィールドに許可するツールをカンマ区切りで列挙します。</p>
+
+        <span class="code-label">読み取り専用エージェントの例</span>
+        <pre class="code"><code><span class="tok-comment">---</span>
+<span class="tok-key">name:</span> <span class="tok-str">readonly-auditor</span>
+<span class="tok-key">description:</span> <span class="tok-str">設定ファイルの監査専用。書き込みは一切行わない。</span>
+<span class="tok-key">tools:</span> <span class="tok-str">Read, Grep, Glob</span>
+<span class="tok-comment">---</span></code></pre>
+
+        <p>このエージェントは <code>Read</code> <code>Grep</code> <code>Glob</code> しか使えないため、たとえ指示が曖昧でも、ファイルを書き換えたりコマンドを実行したりすることが構造的にできません。</p>
+
+        <div class="callout callout-warn">
+          <b>tools を省略した場合</b>
+          <code>tools</code> フィールドを省略すると、そのサブエージェントは利用可能なツールをすべて継承します。書き込み・コマンド実行が必要なエージェントを意図的に作る場合を除き、用途が読み取り・調査だけなら明示的に絞り込むことを推奨します。
+        </div>
+
+        <h4>権限設計の基本パターン</h4>
+        <div class="grid-cards">
+          <div class="card">
+            <h5>読み取り専用型</h5>
+            <p><code>Read, Grep, Glob</code><br>レビュー・監査・調査用。誤操作のリスクがゼロに近い</p>
+          </div>
+          <div class="card">
+            <h5>実行・検証型</h5>
+            <p><code>Read, Bash</code> など<br>テスト実行や検証コマンドの実行が必要なエージェント向け</p>
+          </div>
+          <div class="card">
+            <h5>実装型</h5>
+            <p><code>Read, Edit, Write, Grep, Glob</code><br>コード生成・修正を担当するエージェント向け</p>
+          </div>
+          <div class="card">
+            <h5>フル権限型</h5>
+            <p><code>tools</code> を省略<br>用途が広いgeneral-purpose的なエージェント向け。慎重に</p>
+          </div>
+        </div>
+
+        <p>「このエージェントが暴走したとして、最悪何が起きるか」を起点に権限を設計すると、安全な構成にしやすくなります。レビュー専用なのに書き込み権限を持たせる、といった<strong>必要以上の権限付与</strong>が事故の主な原因です。</p>
+      </div>
+    </details>
+
+    <!-- ===================== CH9 ===================== -->
+    <details class="chapter" id="ch9" style="--chap-color:#d4a27f;">
+      <summary>
+        <span class="chap-num">09</span>
+        <span class="chap-title">専門性による品質向上
+          <span class="chap-sub">役割特化の指示が効くしくみ</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>サブエージェントの本文（システムプロンプト）に役割を絞った指示を書くと、同じモデルでも出力の質が大きく変わります。代表的な専門エージェントの例を見てみましょう。</p>
+
+        <div class="grid-cards">
+          <div class="card">
+            <h5>code-reviewer</h5>
+            <p>セキュリティ・パフォーマンス・可読性を徹底チェック。修正は書かず指摘に徹する</p>
+          </div>
+          <div class="card">
+            <h5>debugger</h5>
+            <p>エラーメッセージとスタックトレースから根本原因を特定することに特化</p>
+          </div>
+          <div class="card">
+            <h5>test-writer</h5>
+            <p>正常系だけでなくエッジケース・異常系まで網羅したテストを作成</p>
+          </div>
+          <div class="card">
+            <h5>doc-writer</h5>
+            <p>コードからAPIドキュメント・README等を一貫したトーンで生成</p>
+          </div>
+        </div>
+
+        <span class="code-label">debugger の本文例</span>
+        <pre class="code"><code>あなたはデバッグ専門のエージェントです。
+
+- まずエラーメッセージとスタックトレースを正確に読み取る
+- 推測で修正案を出す前に、関連コードを実際に確認する
+- 「根本原因」と「対症療法」を明確に区別して報告する
+- 直接の原因が特定できない場合は、
+  仮説を複数提示し、検証方法を添える</code></pre>
+
+        <div class="callout callout-tip">
+          <b>なぜ専門化すると質が上がるのか</b>
+          汎用的な指示（「コードを直して」）では、モデルは「どの観点を優先すべきか」を毎回自分で判断する必要があります。専門特化した指示は、その判断をあらかじめ固定してしまうため、出力のブレが減り、特定の観点における網羅性が上がります。人間のチームで役割分担をするのと同じ理屈です。
+        </div>
+
+        <h4>良い専門特化指示の条件</h4>
+        <ul class="check">
+          <li>「何をするか」だけでなく「何をしないか」も書く（例：修正コードは書かない）</li>
+          <li>チェックすべき観点を具体的に列挙する</li>
+          <li>出力フォーマットを指定する（重大度付き箇条書き、表形式など）</li>
+          <li>判断に迷ったときの優先順位を示す</li>
+        </ul>
+      </div>
+    </details>
+
+    <!-- ===================== CH10 ===================== -->
+    <details class="chapter" id="ch10" style="--chap-color:#6a9bcc;">
+      <summary>
+        <span class="chap-num">10</span>
+        <span class="chap-title">並列実行による時間短縮
+          <span class="chap-sub">複数エージェントを同時に走らせる</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>サブエージェントは複数同時に起動できます。互いに依存関係のないタスクであれば、1回の指示で並列に処理させることで、逐次実行よりも大幅に時間を短縮できます。</p>
+
+        <h4>逐次実行 vs 並列実行</h4>
+        <div class="flow">
+          <div class="flow-step"><strong>逐次実行</strong>フロントエンド調査 → バックエンド調査 → セキュリティチェック<br><span style="font-size:.78rem;color:var(--slate-light);">合計時間 = 3つの作業時間の合計</span></div>
+        </div>
+        <div class="flow">
+          <div class="flow-step accent"><strong>並列実行</strong></div>
+        </div>
+        <div class="flow-parallel" style="margin:-0.4rem 0 1.2rem;">
+          <div class="flow-step">フロントエンド調査エージェント</div>
+          <div class="flow-step">バックエンド調査エージェント</div>
+          <div class="flow-step">セキュリティチェックエージェント</div>
+        </div>
+        <p style="margin-top:-0.6rem;font-size:.85rem;color:var(--slate-light);">合計時間 ≒ 最も時間がかかる1つの作業時間</p>
+
+        <div class="callout callout-example">
+          <b>実践例</b>
+          「このリポジトリ全体の依存関係を調べたい」という依頼に対して、「APIレイヤー」「UIコンポーネント層」「データベーススキーマ」をそれぞれ別のサブエージェントに同時並行で調査させ、最後にメインエージェントが3つの報告を統合する、という使い方が典型的です。
+        </div>
+
+        <h4>並列化が有効なケース・無効なケース</h4>
+        <div class="grid-cards">
+          <div class="card">
+            <h5>並列化が有効</h5>
+            <p>タスク同士に依存関係がなく、それぞれ独立して完結できる調査・実装・検証</p>
+          </div>
+          <div class="card">
+            <h5>並列化が無効・逆効果</h5>
+            <p>Aの結果がBの入力になるなど、順序に意味があるタスク。無理に並列化すると手戻りが発生する</p>
+          </div>
+        </div>
+
+        <p>並列実行を指示する際は、「これらは独立したタスクである」ことが伝わるように依頼内容を分けて書くと、意図通りに並列で動きやすくなります。</p>
+      </div>
+    </details>
+
+    <!-- ===================== CH11 ===================== -->
+    <details class="chapter" id="ch11" style="--chap-color:#ebdbbc;">
+      <summary>
+        <span class="chap-num">11</span>
+        <span class="chap-title">コスト最適化
+          <span class="chap-sub">タスクの難易度とモデルを釣り合わせる</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>すべてのサブエージェントに最高性能のモデルを使うと、精度面では安全ですが、コストは無駄に膨らみます。タスクの難易度に応じてモデルを使い分けることが、コスト最適化の基本戦略です。</p>
+
+        <h4>コスト最適化の考え方</h4>
+        <ol class="steps">
+          <li>そのサブエージェントが行う判断の「難易度」を見積もる</li>
+          <li>判断を誤った場合の「後工程への影響範囲」を見積もる</li>
+          <li>難易度・影響範囲が低い → 軽量モデル、高い → 高性能モデルを割り当てる</li>
+          <li>同じ役割でも、呼び出し頻度が極めて高いエージェントは特にコスト感応度が高いので優先的に見直す</li>
+        </ol>
+
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>エージェントの例</th><th>呼び出し頻度</th><th>判断難易度</th><th>推奨モデル</th></tr></thead>
+          <tbody>
+            <tr><td>ファイル特定・grep</td><td>高い</td><td>低い</td><td>haiku</td></tr>
+            <tr><td>コードレビュー</td><td>中程度</td><td>中程度</td><td>sonnet</td></tr>
+            <tr><td>アーキテクチャ設計レビュー</td><td>低い</td><td>高い</td><td>opus</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout callout-warn">
+          <b>やりすぎ注意</b>
+          コスト最適化を意識しすぎて、判断難易度の高いタスクにまで軽量モデルを割り当てると、誤った結論をメインエージェントがそのまま信じてしまい、手戻りでかえって時間とコストがかさむことがあります。「迷ったら一段階上のモデルを選ぶ」くらいが安全です。
+        </div>
+
+        <p>具体的な料金体系やモデルごとの単価は変動するため、このガイドでは数値を固定せず、「難易度に応じて段階的に使い分ける」という考え方そのものを持ち帰ってください。</p>
+      </div>
+    </details>
+
+    <!-- ===================== CH12 ===================== -->
+    <details class="chapter" id="ch12" style="--chap-color:#c46686;">
+      <summary>
+        <span class="chap-num">12</span>
+        <span class="chap-title">実践例
+          <span class="chap-sub">5つの実践パターン</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <p>ここでは5つの典型的な実践パターンを紹介します。題材は違っても、根底にある考え方（役割分解・権限の絞り込み・モデルの使い分け・並列or順序立て投入）はすべて共通しています。</p>
+
+        <h4>ケース1：実装パイプライン（順次実行）</h4>
+        <p>実装フェーズが明確になった後の、典型的な3段階パイプラインです。</p>
+        <div class="flow">
+          <div class="flow-step"><strong>実装エージェント</strong>機能のコード生成</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><strong>レビューエージェント</strong>（読み取り専用）セキュリティ・パフォーマンスチェック</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><strong>テストエージェント</strong>ユニット・統合テスト作成</div>
+        </div>
+        <p>「実装 → セキュリティレビュー → テストまで回して」と1回伝えるだけで、後続のエージェントが順に処理を進めます。各工程の結果次第で次の工程が変わるため、ここはあえて<strong>順次実行</strong>にするのがポイントです。</p>
+
+        <h4>ケース2：リリース前の品質監査（並列実行）</h4>
+        <p>本番リリース前に、複数の観点から監査エージェント群を並列投入するパターンです。各観点は互いに独立しているため、並列化のメリットが最大化します。</p>
+
+        <span class="code-label">.claude/agents/a11y-auditor.md</span>
+        <pre class="code"><code><span class="tok-comment">---</span>
+<span class="tok-key">name:</span> <span class="tok-str">a11y-auditor</span>
+<span class="tok-key">description:</span> <span class="tok-str">リリース前のアクセシビリティ監査に使用</span>
+<span class="tok-key">tools:</span> <span class="tok-str">Read, Grep, Glob</span>
+<span class="tok-key">model:</span> <span class="tok-str">haiku</span>
+<span class="tok-comment">---</span></code></pre>
+
+        <div class="table-wrap">
+        <table class="cmp">
+          <thead><tr><th>エージェント名</th><th>役割</th><th>権限</th><th>モデル</th></tr></thead>
+          <tbody>
+            <tr><td>a11y-auditor</td><td>アクセシビリティ仕様への準拠確認</td><td>読み取り専用</td><td>haiku（単純検索）</td></tr>
+            <tr><td>perf-auditor</td><td>パフォーマンス劣化要因の検出</td><td>読み取り＋検証実行</td><td>sonnet</td></tr>
+            <tr><td>security-auditor</td><td>入力値検証・認可漏れの確認</td><td>読み取り専用</td><td>sonnet</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>実装が終わったタイミングでこの「監査エージェント群」を並列投入すれば、メイン会話を汚さずに3つの観点の品質チェックが同時に完了します。</p>
+
+        <h4>ケース3：バグ調査（並列の原因切り分け）</h4>
+        <p>「特定の操作が失敗する」というバグ報告に対して、原因がどのレイヤーにあるか分からない段階では、レイヤーごとに調査エージェントを並列投入して切り分けるのが効率的です。</p>
+        <div class="flow">
+          <div class="flow-step accent">「特定の操作をすると失敗する」というバグ報告</div>
+        </div>
+        <div class="flow-parallel" style="margin:0.6rem 0 1.2rem;">
+          <div class="flow-step">フロントエンド調査エージェント<br><span style="font-size:.78rem;color:var(--slate-light);">入力値・状態管理を確認</span></div>
+          <div class="flow-step">API調査エージェント<br><span style="font-size:.78rem;color:var(--slate-light);">リクエスト処理・バリデーションを確認</span></div>
+          <div class="flow-step">データ層調査エージェント<br><span style="font-size:.78rem;color:var(--slate-light);">クエリ・整合性を確認</span></div>
+        </div>
+        <p>3つの調査が同時に走り、それぞれの「シロ・クロ」の報告がメインエージェントに集まった時点で、原因のあるレイヤーに絞って次の一手を打てます。原因不明の初期段階で時間を最も節約できるパターンです。</p>
+
+        <h4>ケース4：大規模リファクタリングの影響範囲調査</h4>
+        <p>共通関数やAPIの仕様を変更する前に、コードベース全体への影響範囲を洗い出すパターンです。見落としがそのまま障害につながるため、網羅性が重要になります。</p>
+        <div class="flow">
+          <div class="flow-step accent">共通APIの仕様変更を計画</div>
+        </div>
+        <div class="flow-parallel" style="margin:0.6rem 0 1.2rem;">
+          <div class="flow-step">利用箇所調査エージェント<br><span style="font-size:.78rem;color:var(--slate-light);">コードベース全体をgrep</span></div>
+          <div class="flow-step">テスト調査エージェント<br><span style="font-size:.78rem;color:var(--slate-light);">関連テストの洗い出し</span></div>
+          <div class="flow-step">ドキュメント調査エージェント<br><span style="font-size:.78rem;color:var(--slate-light);">関連ドキュメントの洗い出し</span></div>
+        </div>
+        <p>各エージェントは読み取り専用（<code>Read, Grep, Glob</code>）に絞り、見つけた箇所のリストだけをメインエージェントに返します。影響範囲が出揃ってから、実際の変更作業に着手します。</p>
+
+        <h4>ケース5：ドキュメント整備（並列生成＋一貫性チェック）</h4>
+        <p>複数モジュールのドキュメントをまとめて整備したいとき、モジュールごとの生成エージェントを並列で走らせ、最後に一貫性チェック専用のエージェントを通すパターンです。</p>
+        <div class="flow">
+          <div class="flow-parallel">
+            <div class="flow-step">モジュールA<br>ドキュメント生成エージェント</div>
+            <div class="flow-step">モジュールB<br>ドキュメント生成エージェント</div>
+            <div class="flow-step">モジュールC<br>ドキュメント生成エージェント</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step accent"><strong>一貫性チェックエージェント</strong>用語・トーン・フォーマットの統一を確認</div>
+        </div>
+        <p>生成自体は並列化し、最後の一貫性チェックだけは全体を見渡す必要があるため順次実行にする、という<strong>並列と順次のハイブリッド</strong>構成の典型例です。</p>
+
+        <div class="callout callout-example">
+          <b>共通するパターン</b>
+          5つのケースに共通するのは、「①役割を分解する → ②権限を絞る → ③難易度に応じたモデルを割り当てる → ④依存関係のないものは並列に、あるものは順次に投入する」という同じ手順です。題材やドメインが変わっても、この4ステップの型はそのまま使い回せます。
+        </div>
+      </div>
+    </details>
+
+    <!-- ===================== CH13 ===================== -->
+    <details class="chapter" id="ch13" style="--chap-color:#3d3d3a;">
+      <summary>
+        <span class="chap-num">13</span>
+        <span class="chap-title">いつ起動すべきか チェックリスト
+          <span class="chap-sub">チートシート・アンチパターン・参考リンク</span>
+        </span>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="chapter-body">
+        <h4>起動すべきサイン</h4>
+        <ul class="check">
+          <li>複数のファイルを横断的に読む必要がありそうだと予見できる</li>
+          <li>明確に独立した複数工程（実装→レビュー→テストなど）がすでに見えている</li>
+          <li>同時に進めても問題ない調査・検証が複数ある</li>
+          <li>書き込み権限を持たせたくない読み取り専用の作業がある</li>
+          <li>同じ会話の中でファイルを何度も読み返しながら検討している</li>
+        </ul>
+
+        <h4>起動を避けたほうがいいサイン（アンチパターン）</h4>
+        <ul class="check cross">
+          <li>方向性がまだ固まっておらず、ユーザーとの対話そのものが必要な段階</li>
+          <li>一往復で終わる軽い質問・確認</li>
+          <li>タスクが小さすぎて、委譲のオーバーヘッドのほうが大きい</li>
+          <li>前のステップの結果次第で次の判断が大きく変わる、依存関係の強い逐次タスクを無理に並列化する</li>
+        </ul>
+
+        <hr class="divider">
+
+        <h4>frontmatter チートシート</h4>
+        <pre class="code"><code><span class="tok-comment">---</span>
+<span class="tok-key">name:</span> <span class="tok-str">agent-name</span>            <span class="tok-comment"># 必須・識別名</span>
+<span class="tok-key">description:</span> <span class="tok-str">いつ使うかの説明</span>   <span class="tok-comment"># 必須・自動委譲の鍵</span>
+<span class="tok-key">tools:</span> <span class="tok-str">Read, Grep, Glob</span>     <span class="tok-comment"># 任意・省略時は全継承</span>
+<span class="tok-key">model:</span> <span class="tok-str">haiku|sonnet|opus|inherit</span> <span class="tok-comment"># 任意・省略時はデフォルト</span>
+<span class="tok-comment">---</span>
+ここにシステムプロンプト本文を書く</code></pre>
+
+        <h4>5つの理由クイック早見表</h4>
+        <div class="badge-row">
+          <span class="badge">コンテキスト保全</span>
+          <span class="badge">権限最小化</span>
+          <span class="badge">専門性</span>
+          <span class="badge">並列実行</span>
+          <span class="badge">コスト最適化</span>
+        </div>
+
+        <h4>学習の進め方（おすすめ順）</h4>
+        <ol class="steps">
+          <li><strong>概念理解：</strong>「なぜ必要か」「メイン vs サブの役割分担」（第1〜4章）</li>
+          <li><strong>スキーマ理解：</strong>frontmatterの完全な指定方法（第5〜8章）</li>
+          <li><strong>実装：</strong>自分のプロジェクトに合わせたカスタムエージェントを実際に1つ作ってみる（第9〜12章）</li>
+          <li><strong>運用：</strong>チェックリストを見ながら、起動すべき場面を見極める（第13章）</li>
+        </ol>
+
+        <h4>参考リンク</h4>
+        <ul class="check">
+          <li><a href="https://code.claude.com/docs/en/sub-agents" target="_blank" rel="noopener">Claude Code Subagents — 公式ドキュメント</a></li>
+        </ul>
+
+        <div class="callout callout-tip">
+          <b>次の一歩</b>
+          <code>/agents</code> コマンドで、実際に1つサブエージェントを作成してみましょう。最初は読み取り専用・haikuモデルのシンプルなエージェントから始めると、安全に感覚をつかめます。
+        </div>
+      </div>
+    </details>
+
+  </div>
+</main>
+
+<button class="top-btn" id="topBtn" aria-label="トップへ戻る">↑</button>
+
+<footer>
+  <div class="foot-inner">
+    <h4>サブエージェント完全ガイド</h4>
+    <ul>
+      <li>全13章・スマホ最適化・アコーディオン形式</li>
+      <li>初心者の基礎理解から、実プロジェクトでの運用判断まで</li>
+    </ul>
+    <div class="fine">最終更新：2026年6月23日</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var chapters = Array.prototype.slice.call(document.querySelectorAll('.chapter'));
+  var tocList = document.getElementById('tocList');
+
+  chapters.forEach(function(ch){
+    var num = ch.querySelector('.chap-num').textContent;
+    var title = ch.querySelector('.chap-title').childNodes[0].textContent.trim();
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + ch.id;
+    a.innerHTML = '<span class="toc-num">' + num + '</span><span>' + title + '</span>';
+    li.appendChild(a);
+    tocList.appendChild(li);
+  });
+
+  var drawer = document.getElementById('tocDrawer');
+  var overlay = document.getElementById('overlay');
+  var menuBtn = document.getElementById('menuBtn');
+  var tocClose = document.getElementById('tocClose');
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  menuBtn.addEventListener('click', openDrawer);
+  tocClose.addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+
+  tocList.addEventListener('click', function(e){
+    var a = e.target.closest('a');
+    if(!a) return;
+    var id = a.getAttribute('href').slice(1);
+    var target = document.getElementById(id);
+    if(target){ target.setAttribute('open',''); }
+    closeDrawer();
+  });
+
+  var toggleAllBtn = document.getElementById('toggleAllBtn');
+  var allOpen = false;
+  toggleAllBtn.addEventListener('click', function(){
+    allOpen = !allOpen;
+    chapters.forEach(function(ch){
+      if(allOpen){ ch.setAttribute('open',''); }
+      else { ch.removeAttribute('open'); }
+    });
+    toggleAllBtn.textContent = allOpen ? 'すべての章を折りたたむ' : 'すべての章を展開する';
+    closeDrawer();
+  });
+
+  // progress bar
+  var bar = document.getElementById('progressBar');
+  function updateProgress(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    var pct = height > 0 ? (scrolled / height) * 100 : 0;
+    bar.style.width = pct + '%';
+  }
+  document.addEventListener('scroll', updateProgress, {passive:true});
+  updateProgress();
+
+  // top button
+  var topBtn = document.getElementById('topBtn');
+  function updateTopBtn(){
+    if(window.scrollY > 600){ topBtn.classList.add('show'); }
+    else { topBtn.classList.remove('show'); }
+  }
+  document.addEventListener('scroll', updateTopBtn, {passive:true});
+  topBtn.addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  // open target chapter when navigating via hash (e.g. hero CTA link)
+  function openFromHash(){
+    var id = location.hash.slice(1);
+    if(!id) return;
+    var target = document.getElementById(id);
+    if(target && target.tagName === 'DETAILS'){ target.setAttribute('open',''); }
+  }
+  window.addEventListener('hashchange', openFromHash);
+  openFromHash();
+})();
+</script>
+
+</body>
+</html>
